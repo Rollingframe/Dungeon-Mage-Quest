@@ -1,0 +1,371 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Dungeon Mage Quest banner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;}
+  body{
+    width:1280px; height:640px; overflow:hidden;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% 8%, rgba(226,128,30,0.14), transparent 60%),
+      linear-gradient(180deg, #17130d 0%, #0c0a07 55%, #080705 100%);
+    font-family:'JetBrains Mono', monospace;
+    position:relative;
+  }
+  .grain{
+    position:absolute; inset:0;
+    background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 3px 3px;
+    pointer-events:none;
+  }
+  .frame{
+    position:absolute; inset:14px;
+    border:1px solid rgba(226,128,30,0.35);
+    pointer-events:none;
+  }
+  .frame::before, .frame::after{
+    content:''; position:absolute; width:22px; height:22px;
+    border:2px solid #e2801e;
+  }
+  .frame::before{ top:-2px; left:-2px; border-right:none; border-bottom:none; }
+  .frame::after{ bottom:-2px; right:-2px; border-left:none; border-top:none; }
+  .corner-tl, .corner-br{ position:absolute; width:22px; height:22px; border:2px solid #e2801e; }
+  .corner-tl{ top:12px; left:12px; border-right:none; border-bottom:none; }
+  .corner-br{ bottom:12px; right:12px; border-left:none; border-top:none; }
+
+  .eyebrow{
+    position:absolute; top:34px; left:0; right:0; text-align:center;
+    color:#e2801e; font-size:13px; letter-spacing:0.32em; font-weight:600;
+    text-transform:uppercase;
+  }
+  h1{
+    position:absolute; top:56px; left:0; right:0; margin:0; text-align:center;
+    font-family:'Cinzel','Georgia',serif; font-weight:700;
+    font-size:56px; letter-spacing:0.03em; line-height:1;
+    color:#f1e9d8;
+    text-shadow: 0 0 26px rgba(226,128,30,0.55), 0 2px 0 #000;
+  }
+  .tagline{
+    position:absolute; top:130px; left:0; right:0; text-align:center;
+    color:#a99c86; font-size:15px; letter-spacing:0.02em;
+  }
+
+  .stage{
+    position:absolute; top:180px; left:0; right:0; bottom:64px;
+    display:flex; align-items:center; justify-content:center; gap:38px;
+  }
+  .device{
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  .bezel{
+    background:#2b241a; border-radius:12px; padding:10px 9px 9px;
+    box-shadow: 0 0 0 1px rgba(226,128,30,0.25), 0 18px 40px rgba(0,0,0,0.55);
+  }
+  .bezel canvas{
+    image-rendering:pixelated; image-rendering:crisp-edges;
+    width:174px; height:309px; border-radius:3px; display:block;
+    box-shadow: 0 0 0 3px #050403, 0 0 0 4px rgba(0,0,0,0.5);
+  }
+  .btns{ display:flex; gap:12px; justify-content:center; margin-top:8px; }
+  .btn{ width:8px; height:8px; border-radius:50%; background:#a99c86; opacity:0.5; }
+  .btn.a{ background:#e2801e; opacity:0.95; }
+  .caption{
+    font-size:11.5px; letter-spacing:0.08em; text-transform:uppercase;
+    color:#a99c86; text-align:center;
+  }
+
+  .footer{
+    position:absolute; bottom:26px; left:0; right:0; text-align:center;
+    color:#6b6152; font-size:12px; letter-spacing:0.1em;
+  }
+  .footer b{ color:#e2801e; }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="corner-tl"></div>
+<div class="corner-br"></div>
+
+<div class="eyebrow">M5StickC Plus2 &middot; motion-controlled dungeon crawl</div>
+<h1>DUNGEON MAGE QUEST</h1>
+<div class="tagline">Swing to attack, lift to block, push down to parry &mdash; push deeper, dungeon after dungeon.</div>
+
+<div class="stage" id="stage"></div>
+
+<div class="footer">github.com &middot; <b>Arduino / M5Unified</b> &middot; MIT licensed</div>
+
+<script>
+// ---------- pixel-art helper library (mirrors the real .ino's M5GFX draw calls) ----------
+const COL = {
+  BLACK:'#000000', WHITE:'#FFFFFF', RED:'#FF3B30', GREEN:'#3ED166', CYAN:'#4DD9E8',
+  MAGENTA:'#E85DE0', YELLOW:'#F5D93A', ORANGE:'#FFA53D', GOLD:'#F0C24B',
+  DARKGREY:'#7B7D7B', LIGHTGREY:'#C7C4C7', NAVY:'#1A1A55', MAROON:'#7A2020',
+  SKYBLUE:'#87CEEB', DARKGREEN:'#1E6B2E', STONE:'#3C3734', TORCH:'#FF8228', ROCK:'#78685C'
+};
+function shade(hex, factor){
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  const f = Math.max(0, Math.min(1, factor));
+  return `rgb(${(r*f)|0},${(g*f)|0},${(b*f)|0})`;
+}
+function mkctx(canvas, w, h){
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  return ctx;
+}
+function fillRect(ctx,x,y,w,h,c){ ctx.fillStyle=c; ctx.fillRect(x,y,w,h); }
+function drawRect(ctx,x,y,w,h,c){ ctx.strokeStyle=c; ctx.lineWidth=1; ctx.strokeRect(x+0.5,y+0.5,w-1,h-1); }
+function fillCircle(ctx,cx,cy,r,c){ ctx.fillStyle=c; ctx.beginPath(); ctx.arc(cx,cy,Math.max(r,0.5),0,7); ctx.fill(); }
+function drawCircleO(ctx,cx,cy,r,c){ ctx.strokeStyle=c; ctx.beginPath(); ctx.arc(cx,cy,r,0,7); ctx.stroke(); }
+function fillTri(ctx,x1,y1,x2,y2,x3,y3,c){ ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.closePath(); ctx.fill(); }
+function line(ctx,x1,y1,x2,y2,c){ ctx.strokeStyle=c; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x1+0.5,y1+0.5); ctx.lineTo(x2+0.5,y2+0.5); ctx.stroke(); }
+function text(ctx,str,cx,y,size,c,align='center'){
+  ctx.fillStyle=c; ctx.font = `${size*7}px 'JetBrains Mono', monospace`;
+  ctx.textAlign = align; ctx.textBaseline='middle';
+  ctx.fillText(str, cx, y);
+}
+function fitSize(str, maxWidthPx, maxSize){
+  for(let sz=maxSize; sz>=1; sz--){ if(str.length*6*sz <= maxWidthPx) return sz; }
+  return 1;
+}
+function drawFitAt(ctx,W,str,datum,x,y,maxSize,color){
+  const sz = fitSize(str, W-10, maxSize);
+  const [vert,horiz] = datum.split('_');
+  ctx.fillStyle=color; ctx.font = `${sz*7}px 'JetBrains Mono', monospace`;
+  ctx.textAlign = horiz==='left' ? 'left' : horiz==='right' ? 'right' : 'center';
+  ctx.textBaseline = vert==='top' ? 'top' : vert==='bottom' ? 'bottom' : 'middle';
+  ctx.fillText(str, x, y);
+}
+function hash01(n){ const x = Math.sin(n*12.9898)*43758.5453; return x - Math.floor(x); }
+function banner(ctx,W,y,h,str,size,c){
+  fillRect(ctx,0,y,W,h,shade(COL.STONE,1.7));
+  drawRect(ctx,0,y,W,h,COL.BLACK);
+  text(ctx,str,W/2,y+h/2+1,size,c);
+}
+function bar(ctx,x,y,w,h,frac,fg,bg){
+  frac = Math.max(0,Math.min(1,frac));
+  fillRect(ctx,x,y,w,h,bg);
+  fillRect(ctx,x,y,w*frac,h,fg);
+  drawRect(ctx,x,y,w,h,COL.DARKGREY);
+}
+function cobweb(ctx,x,y,size,flip){
+  const d = flip?-1:1, c = COL.DARKGREY;
+  line(ctx,x,y,x+d*size,y,c); line(ctx,x,y,x,y+size,c); line(ctx,x,y,x+d*size,y+size,c);
+  line(ctx,x+d*size/2,y,x+d*size/2,y+size/2,c); line(ctx,x,y+size/2,x+d*size/2,y+size,c);
+}
+function corridor(ctx,W,H,phase,color,rings,bob){
+  bob = bob===undefined ? Math.sin(phase*6.283)*2 : bob;
+  const cx=W/2, cy=H*0.40+bob;
+  const maxHalfW=(W-10)/2, maxHalfH=(H*0.60)/2;
+  const topY=10, botY=H-12;
+  const ceilH=(cy-maxHalfH)-topY, floorH=botY-(cy+maxHalfH);
+  if(ceilH>0) fillRect(ctx,0,topY,W,ceilH,shade(color,0.30));
+  if(floorH>0) fillRect(ctx,0,cy+maxHalfH,W,floorH,shade(color,0.55));
+  const halfW=[],halfH=[],depth=[];
+  for(let i=0;i<rings;i++){
+    let t=(i+phase)/rings; if(t>1) t=1;
+    const scale=1-t*0.90;
+    halfW[i]=maxHalfW*scale; halfH[i]=maxHalfH*scale; depth[i]=1-t*0.65;
+    drawRect(ctx,cx-halfW[i],cy-halfH[i],halfW[i]*2,halfH[i]*2,shade(color,depth[i]));
+  }
+  for(let i=0;i<rings-1;i++){
+    const lc=shade(color,depth[i]);
+    line(ctx,cx-halfW[i],cy-halfH[i],cx-halfW[i+1],cy-halfH[i+1],lc);
+    line(ctx,cx+halfW[i],cy-halfH[i],cx+halfW[i+1],cy-halfH[i+1],lc);
+    line(ctx,cx-halfW[i],cy+halfH[i],cx-halfW[i+1],cy+halfH[i+1],lc);
+    line(ctx,cx+halfW[i],cy+halfH[i],cx+halfW[i+1],cy+halfH[i+1],lc);
+  }
+}
+function torch(ctx,x,y,size,flick){
+  flick = flick===undefined ? Math.floor(Math.random()*3) : flick;
+  const flame = flick===0?COL.YELLOW:flick===1?COL.ORANGE:COL.TORCH;
+  fillRect(ctx,x-2,y,4,size,COL.DARKGREY);
+  fillTri(ctx,x,y-size-flick,x-size/3,y,x+size/3,y,flame);
+}
+function brickStrip(ctx,W,y,h){
+  const bw=14,bh=6, rows=Math.max(1,Math.floor(h/bh));
+  for(let row=0;row<rows;row++){
+    const off=(row%2===0)?0:bw/2, by=y+row*bh;
+    for(let bx=-off; bx<W; bx+=bw){ fillRect(ctx,bx,by,bw-2,bh-1,COL.STONE); drawRect(ctx,bx,by,bw-2,bh-1,COL.BLACK); }
+  }
+}
+function mossPatch(ctx,x,y,size,seed){
+  const n = 4+Math.floor(hash01(seed)*3);
+  for(let i=0;i<n;i++){
+    const a = hash01(seed+i*1.7)*6.283, d=hash01(seed+i*2.3)*size;
+    fillCircle(ctx,x+Math.cos(a)*d,y+Math.sin(a)*d*0.6,Math.max(1,size*0.22*hash01(seed+i*3.1)+0.5),shade('#3E5A2E',0.45+hash01(seed+i)*0.45));
+  }
+}
+function floorCrack(ctx,x,y,len,seed){
+  let cx=x, cy=y;
+  ctx.strokeStyle='rgba(0,0,0,0.65)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(cx,cy);
+  const segs=3+Math.floor(hash01(seed)*2);
+  for(let i=0;i<segs;i++){ cx += (hash01(seed+i*1.3)-0.3)*len/segs*1.6; cy += len/segs; ctx.lineTo(cx,cy); }
+  ctx.stroke();
+}
+function supportBeam(ctx,x,topY,botY){
+  fillRect(ctx,x-2,topY,4,botY-topY,shade('#2A2320',1));
+  fillRect(ctx,x-3,topY,1,botY-topY,shade('#1A1512',1));
+}
+function vignette(ctx,W,H){
+  const grad = ctx.createRadialGradient(W/2,H*0.42,H*0.14,W/2,H*0.42,H*0.66);
+  grad.addColorStop(0,'rgba(0,0,0,0)'); grad.addColorStop(1,'rgba(0,0,0,0.55)');
+  ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+}
+function dungeonAtmosphere(ctx,W,H,seed){
+  seed = seed||0;
+  mossPatch(ctx,W*0.1,12,10,seed+1);
+  mossPatch(ctx,W*0.9,H-16,9,seed+2);
+  floorCrack(ctx,W*0.35,H*0.78,H*0.16,seed+3);
+  floorCrack(ctx,W*0.62,H*0.85,H*0.12,seed+4);
+  supportBeam(ctx,6,H*0.32,H-14);
+  supportBeam(ctx,W-6,H*0.32,H-14);
+  vignette(ctx,W,H);
+}
+function corridorBackdrop(ctx,W,H){ corridor(ctx,W,H,0.3,COL.STONE,2,0); brickStrip(ctx,W,0,10); brickStrip(ctx,W,H-12,10); dungeonAtmosphere(ctx,W,H,10); }
+
+function mage(ctx,cx,cy,scale){
+  const s=scale;
+  fillTri(ctx,cx,cy-30*s,cx-16*s,cy+8*s,cx+16*s,cy+8*s,'#5B4FA8');
+  fillTri(ctx,cx,cy-30*s,cx-14*s,cy+2*s,cx+14*s,cy+2*s,'#7A6FCB');
+  fillTri(ctx,cx,cy-52*s,cx-14*s,cy-28*s,cx+14*s,cy-28*s,'#3E3480');
+  fillCircle(ctx,cx,cy-24*s,3*s,COL.GOLD);
+  fillCircle(ctx,cx-16*s,cy-4*s,6*s,'#E7C9A6');
+  line(ctx,cx-16*s,cy+2*s,cx-16*s,cy-40*s,'#8A6A3C');
+  fillCircle(ctx,cx-16*s,cy-42*s,4*s,COL.CYAN);
+  fillCircle(ctx,cx-16*s,cy-42*s,2*s,COL.WHITE);
+}
+
+function drawTitle(ctx,W,H){
+  fillRect(ctx,0,0,W,H,COL.BLACK);
+  corridor(ctx,W,H,0.2,COL.STONE,3,0);
+  brickStrip(ctx,W,0,10); brickStrip(ctx,W,H-12,10);
+  dungeonAtmosphere(ctx,W,H,20);
+  cobweb(ctx,2,12,22,false); cobweb(ctx,W-2,12,22,true);
+  mage(ctx,W*0.60,H*0.62,0.55);
+  text(ctx,'DUNGEON',W/2,H*0.085,3,COL.MAGENTA);
+  text(ctx,'MAGE QUEST',W/2,H*0.20,3,COL.MAGENTA);
+  drawFitAt(ctx,W,'A cursed dungeon','middle_center',W/2,H*0.30,2,COL.LIGHTGREY);
+  drawFitAt(ctx,W,'awaits your wand...','middle_center',W/2,H*0.385,2,COL.LIGHTGREY);
+  text(ctx,'PRESS A',W/2,H*0.79,3,COL.YELLOW);
+  text(ctx,'to begin',W/2,H*0.89,2,COL.YELLOW);
+  drawFitAt(ctx,W,'Best Score 4820','bottom_center',W/2,H-6,1,COL.DARKGREY);
+}
+function drawWalk(ctx,W,H,t){
+  fillRect(ctx,0,0,W,H,COL.BLACK);
+  const phase = (t/480)%1;
+  corridor(ctx,W,H,phase,COL.TORCH,4);
+  dungeonAtmosphere(ctx,W,H,0);
+  torch(ctx,W*0.14,H*0.30,10,1);
+  torch(ctx,W*0.86,H*0.30,10,2);
+  fillCircle(ctx,W*0.28,H*0.22,2,COL.CYAN);
+  fillRect(ctx,0,H-48,W,14,COL.BLACK);
+  drawFitAt(ctx,W,'Water drips in the dark','middle_center',W/2,H-41,2,COL.LIGHTGREY);
+  fillRect(ctx,0,H-26,W,26,COL.BLACK);
+  text(ctx,'HP',14,H-19,2,COL.WHITE,'left');
+  bar(ctx,24,H-24,W-30,10,0.72,COL.GREEN,COL.DARKGREEN);
+}
+function goblin(ctx,cx,cy,r,c){
+  fillTri(ctx,cx-r*0.55,cy-r*0.05,cx-r*1.05,cy-r*0.35,cx-r*0.35,cy-r*0.35,c);
+  fillTri(ctx,cx+r*0.55,cy-r*0.05,cx+r*1.05,cy-r*0.35,cx+r*0.35,cy-r*0.35,c);
+  fillCircle(ctx,cx,cy+r*0.05,r*0.68,c);
+  fillTri(ctx,cx-r*0.42,cy-r*0.32,cx,cy-r*0.68,cx+r*0.42,cy-r*0.32,'#5A4A2A');
+  fillRect(ctx,cx-r*0.42,cy-r*0.34,r*0.84,r*0.1,'#40331E');
+  fillRect(ctx,cx-r*0.38,cy-r*0.22,r*0.76,r*0.1,shade(c,0.6));
+  fillCircle(ctx,cx-r*0.22,cy-r*0.05,Math.max(1,r*0.1),COL.YELLOW); fillCircle(ctx,cx+r*0.22,cy-r*0.05,Math.max(1,r*0.1),COL.YELLOW);
+  fillCircle(ctx,cx-r*0.22,cy-r*0.05,Math.max(1,r*0.04),COL.BLACK); fillCircle(ctx,cx+r*0.22,cy-r*0.05,Math.max(1,r*0.04),COL.BLACK);
+  fillTri(ctx,cx-r*0.07,cy+r*0.08,cx+r*0.07,cy+r*0.08,cx,cy+r*0.2,shade(c,0.7));
+  fillRect(ctx,cx-r*0.3,cy+r*0.27,r*0.6,r*0.15,COL.BLACK);
+  for(let i=0;i<3;i++) fillTri(ctx,cx-r*0.25+i*r*0.22,cy+r*0.27,cx-r*0.14+i*r*0.22,cy+r*0.27,cx-r*0.2+i*r*0.22,cy+r*0.4,COL.WHITE);
+  fillRect(ctx,cx+r*0.55,cy+r*0.14,r*0.15,r*0.5,'#6B4A2A');
+  fillTri(ctx,cx+r*0.48,cy-r*0.02,cx+r*0.77,cy-r*0.02,cx+r*0.625,cy-r*0.32,'#B8B8B8');
+}
+function hydra(ctx,cx,cy,r,c){
+  c = c||COL.DARKGREEN;
+  fillCircle(ctx,cx,cy+r*0.4,r*0.6,c);
+  fillRect(ctx,cx-r*0.5,cy+r*0.2,r,r*0.5,c);
+  [-0.55,0,0.55].forEach((nx,i)=>{
+    const hx=cx+nx*r, hy=cy-r*0.5-Math.abs(nx)*r*0.15, hc=shade(c,i===1?1:0.82);
+    ctx.strokeStyle=hc; ctx.lineWidth=Math.max(2,r*0.14);
+    ctx.beginPath(); ctx.moveTo(cx+nx*r*0.5,cy+r*0.1); ctx.lineTo(hx,hy+r*0.2); ctx.stroke();
+    fillCircle(ctx,hx,hy,r*0.22,hc);
+    fillCircle(ctx,hx-r*0.08,hy-r*0.04,Math.max(1,r*0.05),COL.YELLOW);
+    fillCircle(ctx,hx+r*0.08,hy-r*0.04,Math.max(1,r*0.05),COL.YELLOW);
+    fillTri(ctx,hx-r*0.1,hy+r*0.15,hx+r*0.1,hy+r*0.15,hx,hy+r*0.3,COL.RED);
+  });
+}
+function drawCombat(ctx,W,H){
+  fillRect(ctx,0,0,W,H,COL.BLACK);
+  corridorBackdrop(ctx,W,H);
+  banner(ctx,W,0,26,'GOBLIN',3,COL.WHITE);
+  bar(ctx,4,32,W-8,12,0.58,COL.RED,COL.MAROON);
+  goblin(ctx,W/2,H*0.325,Math.min(W,H)*0.15,'#4C7A3E');
+  fillRect(ctx,0,104,W,66,shade(COL.STONE,1.4)); drawRect(ctx,0,104,W,66,COL.BLACK);
+  text(ctx,'ATTACK',W/2,118,3,COL.CYAN);
+  text(ctx,'-12',W/2,150,4,COL.CYAN);
+  bar(ctx,4,176,W-8,10,0.4,COL.SKYBLUE,COL.NAVY);
+  text(ctx,'HP',14,192,2,COL.WHITE,'left');
+  bar(ctx,4,210,W-8,12,0.66,COL.GREEN,COL.DARKGREEN);
+  drawFitAt(ctx,W,'x2 COMBO','middle_right',W-6,228,2,COL.YELLOW);
+}
+function drawBossFight(ctx,W,H){
+  fillRect(ctx,0,0,W,H,COL.BLACK);
+  corridorBackdrop(ctx,W,H);
+  banner(ctx,W,0,26,'HYDRA',3,COL.WHITE);
+  bar(ctx,4,32,W-8,12,0.42,COL.RED,COL.MAROON);
+  hydra(ctx,W/2,H*0.325,Math.min(W,H)*0.15,COL.MAGENTA);
+  fillRect(ctx,0,104,W,66,shade(COL.STONE,1.4)); drawRect(ctx,0,104,W,66,COL.BLACK);
+  text(ctx,'INCOMING!',W/2,118,2,COL.RED);
+  text(ctx,'PARRY!',W/2,150,4,COL.RED);
+  bar(ctx,4,176,W-8,10,0.85,COL.SKYBLUE,COL.NAVY);
+  text(ctx,'HP',14,192,2,COL.WHITE,'left');
+  bar(ctx,4,210,W-8,12,0.5,COL.GREEN,COL.DARKGREEN);
+  drawFitAt(ctx,W,'x4 COMBO','middle_right',W-6,228,2,COL.YELLOW);
+}
+function drawVictoryChoice(ctx,W,H){
+  fillRect(ctx,0,0,W,H,COL.BLACK);
+  corridorBackdrop(ctx,W,H);
+  banner(ctx,W,4,20,'HYDRA SLAIN!',2,COL.GOLD);
+  text(ctx,'SCORE',W/2,H*0.27,2,COL.LIGHTGREY);
+  text(ctx,'4820',W/2,H*0.36,4,COL.GOLD);
+  drawFitAt(ctx,W,'choose next dungeon','middle_center',W/2,H*0.47,1,COL.LIGHTGREY);
+  const cardW=(W-16)/2, cardY=H*0.53, cardH=H*0.31;
+  fillRect(ctx,6,cardY,cardW,cardH,shade(COL.STONE,1.6)); drawRect(ctx,6,cardY,cardW,cardH,COL.BLACK);
+  fillRect(ctx,10+cardW,cardY,cardW,cardH,shade(COL.STONE,1.6)); drawRect(ctx,10+cardW,cardY,cardW,cardH,COL.BLACK);
+  text(ctx,'A',6+cardW/2,cardY+15,2,COL.YELLOW);
+  drawFitAt(ctx,cardW,'Sunken','middle_center',6+cardW/2,cardY+cardH*0.55,1,COL.WHITE);
+  drawFitAt(ctx,cardW,'Crypt','middle_center',6+cardW/2,cardY+cardH*0.75,1,COL.WHITE);
+  text(ctx,'B',10+cardW+cardW/2,cardY+15,2,COL.YELLOW);
+  drawFitAt(ctx,cardW,'Frozen','middle_center',10+cardW+cardW/2,cardY+cardH*0.55,1,COL.WHITE);
+  drawFitAt(ctx,cardW,'Vault','middle_center',10+cardW+cardW/2,cardY+cardH*0.75,1,COL.WHITE);
+  text(ctx,'Best 4820',W/2,H-6,1,COL.DARKGREY);
+}
+
+const SCREENS = [
+  {name:'Title', sub:'boot & attract', fn:drawTitle},
+  {name:'Walking', sub:'auto-advance corridor', fn:(ctx,w,h)=>drawWalk(ctx,w,h,320)},
+  {name:'Boss Fight', sub:'hydra, parry prompt', fn:drawBossFight},
+  {name:'Dungeon Clear', sub:'score & next dungeon', fn:drawVictoryChoice},
+];
+const stage = document.getElementById('stage');
+SCREENS.forEach(s=>{
+  const dev = document.createElement('div'); dev.className='device';
+  const bezel = document.createElement('div'); bezel.className='bezel';
+  const canvas = document.createElement('canvas');
+  const ctx = mkctx(canvas,135,240);
+  s.fn(ctx,135,240);
+  const btns = document.createElement('div'); btns.className='btns';
+  btns.innerHTML = '<span class="btn a"></span><span class="btn"></span>';
+  bezel.appendChild(canvas);
+  const cap = document.createElement('div'); cap.className='caption'; cap.textContent = s.name;
+  dev.appendChild(bezel); dev.appendChild(btns); dev.appendChild(cap);
+  stage.appendChild(dev);
+});
+window.__RENDER_READY__ = true;
+</script>
+</body>
+</html>
