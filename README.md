@@ -1,5 +1,7 @@
 # Dungeon Mage Quest — M5StickC Plus2
 
+![Dungeon Mage Quest](docs/banner.png)
+
 A motion-controlled, first-person dungeon crawl for the M5StickC Plus2.
 You walk a torchlit stone corridor automatically — no steering — and
 swing the device like a wand whenever something appears ahead. Clear a
@@ -210,6 +212,10 @@ shine), the control scheme, and the startup jingle — built while
 designing this update, kept here for reference. It's not part of the
 sketch and doesn't need to be uploaded to the device; open it in any
 browser.
+
+`docs/banner.html` is the source for the README banner above (four
+device mockups composed on one page) — open it in a browser and
+screenshot it again any time the interface changes.
 
 ## Ideas to extend it
 
