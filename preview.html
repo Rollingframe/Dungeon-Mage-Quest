@@ -1,0 +1,804 @@
+<title>Dungeon Mage Quest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDE6D6; --surface:#FBF7EE; --bezel:#E3D9C4;
+  --ink:#221B12; --ink-dim:#6B6152;
+  --accent:#C9631C; --accent-2:#A8791C; --danger:#A83228;
+  --line:rgba(34,27,18,0.16); --screen-off:#0B0906;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#17140F; --surface:#221D16; --bezel:#2B241A;
+    --ink:#F1E9D8; --ink-dim:#A99C86;
+    --accent:#E2801E; --accent-2:#E5B93C; --danger:#C1443A;
+    --line:rgba(241,233,216,0.14); --screen-off:#000000;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#17140F; --surface:#221D16; --bezel:#2B241A;
+  --ink:#F1E9D8; --ink-dim:#A99C86;
+  --accent:#E2801E; --accent-2:#E5B93C; --danger:#C1443A;
+  --line:rgba(241,233,216,0.14); --screen-off:#000000;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:'Work Sans', system-ui, sans-serif;
+  padding:48px 24px 96px;
+}
+.wrap{max-width:1180px; margin:0 auto; display:flex; flex-direction:column; gap:64px;}
+
+header{display:flex; flex-direction:column; gap:10px; max-width:640px;}
+.eyebrow{
+  font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--accent); font-weight:600;
+}
+h1{
+  font-family:'Cinzel', 'Georgia', serif; font-weight:700;
+  font-size:clamp(32px,5vw,52px); line-height:1.05; margin:0;
+  text-wrap:balance; letter-spacing:0.01em;
+}
+header p{
+  font-size:16px; line-height:1.6; color:var(--ink-dim); margin:0; max-width:56ch;
+}
+
+section{display:flex; flex-direction:column; gap:22px;}
+.section-head{display:flex; flex-direction:column; gap:6px;}
+.section-head h2{
+  font-family:'Cinzel', serif; font-size:22px; margin:0; font-weight:600; letter-spacing:0.01em;
+}
+.section-head .note{
+  font-family:'JetBrains Mono', monospace; font-size:12.5px; color:var(--ink-dim); line-height:1.6; max-width:70ch;
+}
+
+/* device frame */
+.grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:22px;}
+.device{
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  padding:16px 16px 14px; display:flex; flex-direction:column; align-items:center; gap:12px;
+}
+.device .bezel{
+  background:var(--bezel); border-radius:10px; padding:10px 8px;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.device canvas{
+  image-rendering:pixelated; image-rendering:crisp-edges;
+  width:168px; height:298px; border-radius:3px; background:var(--screen-off);
+  box-shadow: 0 0 0 3px #050403, 0 0 0 4px rgba(0,0,0,0.4);
+}
+.device .btns{display:flex; gap:14px; align-items:center;}
+.device .btn{
+  width:9px; height:9px; border-radius:50%; background:var(--ink-dim); opacity:0.5;
+}
+.device .btn.a{background:var(--accent); opacity:0.9;}
+.device figcaption{
+  font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--ink-dim);
+  text-align:center; letter-spacing:0.03em;
+}
+.device figcaption b{color:var(--ink); font-weight:600;}
+
+/* effects row */
+.fx-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:22px;}
+.fx-card{
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  padding:16px; display:flex; flex-direction:column; gap:12px; align-items:center;
+}
+.fx-card canvas{
+  image-rendering:pixelated; width:202px; height:180px; border-radius:6px;
+  background:#0a0806; box-shadow:0 0 0 3px #050403;
+}
+.fx-label{font-family:'Cinzel', serif; font-size:15px; font-weight:600;}
+.fx-desc{font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--ink-dim); text-align:center; line-height:1.55;}
+
+/* roster */
+.roster{display:grid; grid-template-columns:repeat(auto-fit,minmax(148px,1fr)); gap:16px;}
+.mon{
+  background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  padding:14px; display:flex; flex-direction:column; align-items:center; gap:8px;
+}
+.mon canvas{width:88px; height:88px; background:#0a0806; border-radius:6px; image-rendering:pixelated;}
+.mon .name{font-family:'Cinzel', serif; font-size:14px; font-weight:600;}
+.mon .tier{
+  font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:0.06em;
+  text-transform:uppercase; padding:2px 7px; border-radius:20px;
+}
+.mon .tier.t1{color:#4C8C5B; background:rgba(76,140,91,0.15);}
+.mon .tier.t2{color:var(--accent); background:rgba(226,128,30,0.15);}
+.mon .tier.t3{color:var(--danger); background:rgba(193,68,58,0.15);}
+.mon .tier.boss{color:#C15DE8; background:rgba(193,93,232,0.16);}
+.mon .desc{font-size:12px; color:var(--ink-dim); text-align:center; line-height:1.5;}
+
+/* controls diagram */
+.controls{
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  padding:28px; display:flex; gap:36px; align-items:center; flex-wrap:wrap; justify-content:center;
+}
+.controls svg{width:150px; height:220px; flex:none;}
+.control-list{display:flex; flex-direction:column; gap:14px; max-width:360px;}
+.control-item{display:flex; gap:12px; align-items:flex-start;}
+.control-swatch{width:10px; height:10px; border-radius:50%; margin-top:6px; flex:none;}
+.control-item h3{margin:0 0 2px; font-size:14px; font-family:'Cinzel',serif; font-weight:600;}
+.control-item p{margin:0; font-size:12.5px; color:var(--ink-dim); line-height:1.55;}
+
+/* jingle */
+.jingle{
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  padding:24px 28px; display:flex; flex-direction:column; gap:16px;
+}
+.jingle-row{display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+button.play{
+  font-family:'JetBrains Mono', monospace; font-size:13px; font-weight:600; letter-spacing:0.04em;
+  background:var(--accent); color:#1B0F02; border:none; border-radius:8px;
+  padding:11px 20px; cursor:pointer; display:flex; align-items:center; gap:8px;
+  transition:filter 0.15s ease, transform 0.1s ease;
+}
+button.play:hover{filter:brightness(1.08);}
+button.play:active{transform:scale(0.97);}
+button.play:focus-visible{outline:2px solid var(--accent-2); outline-offset:2px;}
+.notes-strip{display:flex; gap:5px; flex-wrap:wrap;}
+.note-chip{
+  font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-dim);
+  border:1px solid var(--line); border-radius:5px; padding:4px 7px;
+  transition:background 0.15s ease, color 0.15s ease;
+}
+.note-chip.active{background:var(--accent); color:#1B0F02; border-color:var(--accent);}
+.jingle p.note{font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--ink-dim); line-height:1.6; margin:0; max-width:70ch;}
+
+footer{font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--ink-dim); text-align:center; padding-top:8px;}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">M5StickC Plus2 &middot; Interface &amp; effects preview</div>
+  <h1>Dungeon Mage Quest</h1>
+  <p>A render of the display after the flicker/legibility fix, plus mockups of the requested additions &mdash; kill/hit magic effects, the up&#8202;/&#8202;down&#8202;/&#8202;side control scheme, two new monsters, and the startup jingle &mdash; before any of it goes back into the sketch.</p>
+</header>
+
+<section>
+  <div class="section-head">
+    <h2>Interface, after the fix</h2>
+    <div class="note">135&times;240 native, rendered here at 1.25&times; with pixelated scaling for a true read. Every screen now shares the same stone-plaque chrome; text auto-grows when it fits.</div>
+  </div>
+  <div class="grid" id="screens"></div>
+</section>
+
+<section>
+  <div class="section-head">
+    <h2>Proposed combat effects</h2>
+    <div class="note">Looping so you can watch the timing &mdash; on real hardware each is 2&#8211;4 frames, ~120&#8211;250ms total, composited into the existing canvas-buffer/pushSprite frame.</div>
+  </div>
+  <div class="fx-grid" id="fx"></div>
+</section>
+
+<section>
+  <div class="section-head">
+    <h2>New control scheme</h2>
+    <div class="note">Replaces the old 4-gesture set (slash/chop/thrust/block). Side-to-side becomes the one attack input; up and down split into two distinct defensive reads.</div>
+  </div>
+  <div class="controls">
+    <svg viewBox="0 0 150 220" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Device tilted up for block, down for parry, side to side for attack">
+      <rect x="35" y="10" width="80" height="200" rx="14" fill="var(--bezel)" stroke="var(--line)"/>
+      <rect x="45" y="24" width="60" height="112" rx="4" fill="#0a0806"/>
+      <circle cx="75" cy="150" r="9" fill="var(--accent)"/>
+      <circle cx="106" cy="150" r="6" fill="var(--ink-dim)" opacity="0.6"/>
+      <path d="M75 4 L64 -14 M75 4 L86 -14" stroke="var(--accent-2)" stroke-width="4" stroke-linecap="round" transform="translate(0,20)"/>
+      <path d="M75 216 L64 234 M75 216 L86 234" stroke="var(--danger)" stroke-width="4" stroke-linecap="round" transform="translate(0,-16)"/>
+      <path d="M20 90 L2 90 M2 90 L10 82 M2 90 L10 98" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M130 90 L148 90 M148 90 L140 82 M148 90 L140 98" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="control-list">
+      <div class="control-item">
+        <div class="control-swatch" style="background:var(--accent-2)"></div>
+        <div><h3>Lift up &rarr; Block</h3><p>Raise the wand sharply. Stops a BLOCK-flagged attack cold and reflects a hit back.</p></div>
+      </div>
+      <div class="control-item">
+        <div class="control-swatch" style="background:var(--danger)"></div>
+        <div><h3>Push down &rarr; Parry</h3><p>New. A sharp downward push answers a PARRY-flagged attack &mdash; same reflect, distinct motion so you can't just wave the wand and win.</p></div>
+      </div>
+      <div class="control-item">
+        <div class="control-swatch" style="background:var(--accent)"></div>
+        <div><h3>Side to side &rarr; Attack</h3><p>Any horizontal or forward swing lands a hit. Slash/Chop/Thrust collapse into one legible "swing" input &mdash; obstacles now only ever ask for Attack, Block, or Parry.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-head">
+    <h2>Monster roster</h2>
+    <div class="note">Two new fantasy staples join the three existing species. Difficulty scales with dungeon depth &mdash; deeper floors weight the pool toward the harder ones.</div>
+  </div>
+  <div class="roster" id="roster"></div>
+</section>
+
+<section>
+  <div class="jingle">
+    <div class="section-head">
+      <h2>Startup jingle</h2>
+      <div class="note">Monophonic square-wave, matching the M5StickC's single piezo speaker &mdash; the same eight <code>M5.Speaker.tone(hz, ms)</code> calls would run at boot, right before the title card.</div>
+    </div>
+    <div class="jingle-row">
+      <button class="play" id="playJingle">&#9658; Play jingle</button>
+      <div class="notes-strip" id="notes"></div>
+    </div>
+    <p class="note">C5 &middot; E5 &middot; G5 &middot; C6 (hold) &middot; rest &middot; G5 &middot; A5 &middot; C6 (hold) &mdash; a quick rising fanfare, ~1.1s, in the spirit of an old 8-bit RPG boot chime.</p>
+  </div>
+</section>
+
+<footer>Dungeon Mage Quest &middot; preview build &middot; nothing here has shipped to the .ino yet</footer>
+
+</div>
+
+<script>
+// ---------- shared pixel-art helpers (mirrors the M5GFX draw calls) ----------
+const COL = {
+  BLACK:'#000000', WHITE:'#FFFFFF', RED:'#FF3B30', GREEN:'#3ED166', CYAN:'#4DD9E8',
+  MAGENTA:'#E85DE0', YELLOW:'#F5D93A', ORANGE:'#FFA53D', GOLD:'#F0C24B',
+  DARKGREY:'#7B7D7B', LIGHTGREY:'#C7C4C7', NAVY:'#1A1A55', MAROON:'#7A2020',
+  SKYBLUE:'#87CEEB', DARKGREEN:'#1E6B2E', STONE:'#3C3734', TORCH:'#FF8228', ROCK:'#78685C'
+};
+function shade(hex, factor){
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  const f = Math.max(0, Math.min(1, factor));
+  return `rgb(${(r*f)|0},${(g*f)|0},${(b*f)|0})`;
+}
+function mkctx(canvas, w, h){
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  return ctx;
+}
+function fillRect(ctx,x,y,w,h,c){ ctx.fillStyle=c; ctx.fillRect(x,y,w,h); }
+function drawRect(ctx,x,y,w,h,c){ ctx.strokeStyle=c; ctx.lineWidth=1; ctx.strokeRect(x+0.5,y+0.5,w-1,h-1); }
+function fillCircle(ctx,cx,cy,r,c){ ctx.fillStyle=c; ctx.beginPath(); ctx.arc(cx,cy,Math.max(r,0.5),0,7); ctx.fill(); }
+function drawCircleO(ctx,cx,cy,r,c){ ctx.strokeStyle=c; ctx.beginPath(); ctx.arc(cx,cy,r,0,7); ctx.stroke(); }
+function fillTri(ctx,x1,y1,x2,y2,x3,y3,c){ ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.closePath(); ctx.fill(); }
+function line(ctx,x1,y1,x2,y2,c){ ctx.strokeStyle=c; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x1+0.5,y1+0.5); ctx.lineTo(x2+0.5,y2+0.5); ctx.stroke(); }
+function text(ctx,str,cx,y,size,c,align='center'){
+  ctx.fillStyle=c; ctx.font = `${size*7}px 'JetBrains Mono', monospace`;
+  ctx.textAlign = align; ctx.textBaseline='middle';
+  ctx.fillText(str, cx, y);
+}
+// Mirrors the real .ino's fitSize(str, maxWidthPx, maxSize): shrinks a size
+// down until the string fits, so nothing scrolls/clips like the first render did.
+function fitSize(str, maxWidthPx, maxSize){
+  for(let sz=maxSize; sz>=1; sz--){ if(str.length*6*sz <= maxWidthPx) return sz; }
+  return 1;
+}
+// datum: M5GFX-style two-part string, e.g. 'top_left' / 'middle_center' / 'bottom_right'
+function drawFitAt(ctx,W,str,datum,x,y,maxSize,color){
+  const sz = fitSize(str, W-10, maxSize);
+  const [vert,horiz] = datum.split('_');
+  ctx.fillStyle=color; ctx.font = `${sz*7}px 'JetBrains Mono', monospace`;
+  ctx.textAlign = horiz==='left' ? 'left' : horiz==='right' ? 'right' : 'center';
+  ctx.textBaseline = vert==='top' ? 'top' : vert==='bottom' ? 'bottom' : 'middle';
+  ctx.fillText(str, x, y);
+}
+function hash01(n){ const x = Math.sin(n*12.9898)*43758.5453; return x - Math.floor(x); }
+function banner(ctx,W,y,h,str,size,c){
+  fillRect(ctx,0,y,W,h,shade(COL.STONE,1.7));
+  drawRect(ctx,0,y,W,h,COL.BLACK);
+  text(ctx,str,W/2,y+h/2+1,size,c);
+}
+function bar(ctx,x,y,w,h,frac,fg,bg){
+  frac = Math.max(0,Math.min(1,frac));
+  fillRect(ctx,x,y,w,h,bg);
+  fillRect(ctx,x,y,w*frac,h,fg);
+  drawRect(ctx,x,y,w,h,COL.DARKGREY);
+}
+function cobweb(ctx,x,y,size,flip){
+  const d = flip?-1:1, c = COL.DARKGREY;
+  line(ctx,x,y,x+d*size,y,c); line(ctx,x,y,x,y+size,c); line(ctx,x,y,x+d*size,y+size,c);
+  line(ctx,x+d*size/2,y,x+d*size/2,y+size/2,c); line(ctx,x,y+size/2,x+d*size/2,y+size,c);
+}
+
+function corridor(ctx,W,H,phase,color,rings,bob){
+  bob = bob===undefined ? Math.sin(phase*6.283)*2 : bob;
+  const cx=W/2, cy=H*0.40+bob;
+  const maxHalfW=(W-10)/2, maxHalfH=(H*0.60)/2;
+  const topY=10, botY=H-12;
+  const ceilH=(cy-maxHalfH)-topY, floorH=botY-(cy+maxHalfH);
+  if(ceilH>0) fillRect(ctx,0,topY,W,ceilH,shade(color,0.30));
+  if(floorH>0) fillRect(ctx,0,cy+maxHalfH,W,floorH,shade(color,0.55));
+  const halfW=[],halfH=[],depth=[];
+  for(let i=0;i<rings;i++){
+    let t=(i+phase)/rings; if(t>1) t=1;
+    const scale=1-t*0.90;
+    halfW[i]=maxHalfW*scale; halfH[i]=maxHalfH*scale; depth[i]=1-t*0.65;
+    drawRect(ctx,cx-halfW[i],cy-halfH[i],halfW[i]*2,halfH[i]*2,shade(color,depth[i]));
+  }
+  for(let i=0;i<rings-1;i++){
+    const lc=shade(color,depth[i]);
+    line(ctx,cx-halfW[i],cy-halfH[i],cx-halfW[i+1],cy-halfH[i+1],lc);
+    line(ctx,cx+halfW[i],cy-halfH[i],cx+halfW[i+1],cy-halfH[i+1],lc);
+    line(ctx,cx-halfW[i],cy+halfH[i],cx-halfW[i+1],cy+halfH[i+1],lc);
+    line(ctx,cx+halfW[i],cy+halfH[i],cx+halfW[i+1],cy+halfH[i+1],lc);
+  }
+}
+function torch(ctx,x,y,size,flick){
+  flick = flick===undefined ? Math.floor(Math.random()*3) : flick;
+  const flame = flick===0?COL.YELLOW:flick===1?COL.ORANGE:COL.TORCH;
+  fillRect(ctx,x-2,y,4,size,COL.DARKGREY);
+  fillTri(ctx,x,y-size-flick,x-size/3,y,x+size/3,y,flame);
+}
+function brickStrip(ctx,W,y,h){
+  const bw=14,bh=6, rows=Math.max(1,Math.floor(h/bh));
+  for(let row=0;row<rows;row++){
+    const off=(row%2===0)?0:bw/2, by=y+row*bh;
+    for(let bx=-off; bx<W; bx+=bw){ fillRect(ctx,bx,by,bw-2,bh-1,COL.STONE); drawRect(ctx,bx,by,bw-2,bh-1,COL.BLACK); }
+  }
+}
+function corridorBackdrop(ctx,W,H){ corridor(ctx,W,H,0.3,COL.STONE,2,0); brickStrip(ctx,W,0,10); brickStrip(ctx,W,H-12,10); dungeonAtmosphere(ctx,W,H,10); }
+
+// ---------- dungeon atmosphere: moss, floor cracks, support beams, vignette ----------
+function mossPatch(ctx,x,y,size,seed){
+  const n = 4+Math.floor(hash01(seed)*3);
+  for(let i=0;i<n;i++){
+    const a = hash01(seed+i*1.7)*6.283, d=hash01(seed+i*2.3)*size;
+    fillCircle(ctx,x+Math.cos(a)*d,y+Math.sin(a)*d*0.6,Math.max(1,size*0.22*hash01(seed+i*3.1)+0.5),shade('#3E5A2E',0.45+hash01(seed+i)*0.45));
+  }
+}
+function floorCrack(ctx,x,y,len,seed){
+  let cx=x, cy=y;
+  ctx.strokeStyle='rgba(0,0,0,0.65)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(cx,cy);
+  const segs=3+Math.floor(hash01(seed)*2);
+  for(let i=0;i<segs;i++){ cx += (hash01(seed+i*1.3)-0.3)*len/segs*1.6; cy += len/segs; ctx.lineTo(cx,cy); }
+  ctx.stroke();
+}
+function supportBeam(ctx,x,topY,botY){
+  fillRect(ctx,x-2,topY,4,botY-topY,shade('#2A2320',1));
+  fillRect(ctx,x-3,topY,1,botY-topY,shade('#1A1512',1));
+}
+function vignette(ctx,W,H){
+  const grad = ctx.createRadialGradient(W/2,H*0.42,H*0.14,W/2,H*0.42,H*0.66);
+  grad.addColorStop(0,'rgba(0,0,0,0)'); grad.addColorStop(1,'rgba(0,0,0,0.55)');
+  ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+}
+function dungeonAtmosphere(ctx,W,H,seed){
+  seed = seed||0;
+  mossPatch(ctx,W*0.1,12,10,seed+1);
+  mossPatch(ctx,W*0.9,H-16,9,seed+2);
+  floorCrack(ctx,W*0.35,H*0.78,H*0.16,seed+3);
+  floorCrack(ctx,W*0.62,H*0.85,H*0.12,seed+4);
+  supportBeam(ctx,6,H*0.32,H-14);
+  supportBeam(ctx,W-6,H*0.32,H-14);
+  vignette(ctx,W,H);
+}
+
+// mage silhouette for the title screen
+function mage(ctx,cx,cy,scale){
+  const s=scale;
+  fillTri(ctx,cx,cy-30*s,cx-16*s,cy+8*s,cx+16*s,cy+8*s,'#5B4FA8');           // robe
+  fillTri(ctx,cx,cy-30*s,cx-14*s,cy+2*s,cx+14*s,cy+2*s,'#7A6FCB');           // robe highlight
+  fillTri(ctx,cx,cy-52*s,cx-14*s,cy-28*s,cx+14*s,cy-28*s,'#3E3480');         // hat
+  fillCircle(ctx,cx,cy-24*s,3*s,COL.GOLD);                                   // hat band gem
+  fillCircle(ctx,cx-16*s,cy-4*s,6*s,'#E7C9A6');                              // hand
+  line(ctx,cx-16*s,cy+2*s,cx-16*s,cy-40*s,'#8A6A3C');                        // staff
+  fillCircle(ctx,cx-16*s,cy-42*s,4*s,COL.CYAN);                              // orb
+  fillCircle(ctx,cx-16*s,cy-42*s,2*s,COL.WHITE);
+}
+
+// ---------- Screen composites ----------
+function drawTitle(ctx,W,H){
+  fillRect(ctx,0,0,W,H,COL.BLACK);
+  corridor(ctx,W,H,0.2,COL.STONE,3,0);
+  brickStrip(ctx,W,0,10); brickStrip(ctx,W,H-12,10);
+  dungeonAtmosphere(ctx,W,H,20);
+  cobweb(ctx,2,12,22,false); cobweb(ctx,W-2,12,22,true);
+  mage(ctx,W*0.74,H*0.52,0.62);
+  text(ctx,'DUNGEON',W/2,H*0.10,3,COL.MAGENTA);
+  text(ctx,'MAGE QUEST',W/2,H*0.155,3,COL.MAGENTA);
+  text(ctx,'A cursed dungeon',W*0.40,H*0.30,1,COL.LIGHTGREY,'left');
+  text(ctx,'awaits your wand...',W*0.40,H*0.355,1,COL.LIGHTGREY,'left');
+  text(ctx,'PRESS A',W/2,H*0.83,3,COL.YELLOW);
+  text(ctx,'to begin',W/2,H*0.895,2,COL.YELLOW);
+  text(ctx,'Best 1:42.3',W/2,H-6,2,COL.DARKGREY);
+}
+// A single dripping crack: irregular period, irregular fall-duration and a
+// chance of skipping a cycle entirely, so drops don't fall on a metronome.
+function drawDrip(ctx,H,t,slotBase,seedOffset,dx){
+  const slot = Math.floor(t/slotBase);
+  if(hash01(slot*7.13+seedOffset) < 0.4) return; // ~40% of slots stay dry
+  const fallDur = slotBase*(0.5+hash01(slot*3.7+seedOffset)*0.35);
+  const phase = t - slot*slotBase;
+  if(phase < fallDur){
+    const dy = H*0.14+(phase/fallDur)*(H*0.20);
+    fillCircle(ctx,dx,dy,2,COL.CYAN);
+  }
+}
+function drawWalk(ctx,W,H,t){
+  fillRect(ctx,0,0,W,H,COL.BLACK);
+  const phase = (t/480)%1;
+  corridor(ctx,W,H,phase,COL.TORCH,4);
+  dungeonAtmosphere(ctx,W,H,0);
+  torch(ctx,W*0.14,H*0.30,10,Math.floor(t/160)%3);
+  torch(ctx,W*0.86,H*0.30,10,Math.floor(t/160+1)%3);
+  drawDrip(ctx,H,t,780,0,W*0.28);
+  drawDrip(ctx,H,t,930,50,W*0.68);
+  fillRect(ctx,0,H-48,W,14,COL.BLACK);
+  drawFitAt(ctx,W,'Water drips in the dark','middle_center',W/2,H-41,2,COL.LIGHTGREY);
+  fillRect(ctx,0,H-26,W,26,COL.BLACK);
+  text(ctx,'HP',14,H-19,2,COL.WHITE,'left');
+  bar(ctx,24,H-24,W-30,10,0.72,COL.GREEN,COL.DARKGREEN);
+}
+function slime(ctx,cx,cy,r,c){
+  fillCircle(ctx,cx,cy,r*0.75,c);
+  fillCircle(ctx,cx-r*0.55,cy+r*0.25,r*0.45,c);
+  fillCircle(ctx,cx+r*0.55,cy+r*0.25,r*0.45,c);
+  fillRect(ctx,cx-r*0.9,cy,r*1.8,r*0.55,c);
+  fillCircle(ctx,cx-r/3,cy,r/6,COL.WHITE); fillCircle(ctx,cx+r/3,cy,r/6,COL.WHITE);
+  fillCircle(ctx,cx-r/3,cy,r/10,COL.RED); fillCircle(ctx,cx+r/3,cy,r/10,COL.RED);
+  fillCircle(ctx,cx-r/2,cy-r/2,Math.max(1,r/8),COL.WHITE);
+  fillRect(ctx,cx-r*0.35,cy+r*0.32,r*0.7,r/8,COL.BLACK);
+  for(let i=-2;i<=2;i++){ const fx=cx+i*(r/6); fillTri(ctx,fx,cy+r*0.32,fx-r/12,cy+r*0.32,fx-r/20,cy+r*0.32+r/8,COL.WHITE); }
+}
+function bat(ctx,cx,cy,r,c){
+  fillTri(ctx,cx-r*0.5,cy,cx-r*1.5,cy-r*0.6,cx-r*0.4,cy+r*0.5,c);
+  fillTri(ctx,cx+r*0.5,cy,cx+r*1.5,cy-r*0.6,cx+r*0.4,cy+r*0.5,c);
+  fillCircle(ctx,cx,cy,r*0.55,c);
+  fillTri(ctx,cx-r*0.35,cy-r*0.45,cx-r*0.2,cy-r*0.9,cx-r*0.05,cy-r*0.45,c);
+  fillTri(ctx,cx+r*0.05,cy-r*0.45,cx+r*0.2,cy-r*0.9,cx+r*0.35,cy-r*0.45,c);
+  fillCircle(ctx,cx-r*0.2,cy-r*0.1,Math.max(1,r*0.09),COL.RED);
+  fillCircle(ctx,cx+r*0.2,cy-r*0.1,Math.max(1,r*0.09),COL.RED);
+}
+function rat(ctx,cx,cy,r,c){
+  // haunch/body
+  fillCircle(ctx,cx-r*0.1,cy+r*0.2,r*0.55,c);
+  // tail, curled behind
+  ctx.strokeStyle=shade(c,0.7); ctx.lineWidth=Math.max(1,r*0.06);
+  ctx.beginPath(); ctx.moveTo(cx-r*0.55,cy+r*0.5); ctx.quadraticCurveTo(cx-r*1.3,cy+r*0.6,cx-r*1.15,cy+r*0.05); ctx.stroke();
+  // pointed snout, facing right
+  fillTri(ctx,cx+r*0.25,cy-r*0.05,cx+r*0.95,cy+r*0.18,cx+r*0.3,cy+r*0.42,c);
+  // big round ears
+  fillCircle(ctx,cx-r*0.4,cy-r*0.38,r*0.24,c);
+  fillCircle(ctx,cx-r*0.4,cy-r*0.38,r*0.13,shade(c,0.55));
+  fillCircle(ctx,cx+r*0.05,cy-r*0.42,r*0.2,c);
+  fillCircle(ctx,cx+r*0.05,cy-r*0.42,r*0.1,shade(c,0.55));
+  // eye
+  fillCircle(ctx,cx+r*0.3,cy+r*0.06,Math.max(1,r*0.08),COL.RED);
+  // nose + whiskers
+  fillCircle(ctx,cx+r*0.85,cy+r*0.22,Math.max(1,r*0.07),COL.BLACK);
+  line(ctx,cx+r*0.7,cy+r*0.18,cx+r*1.15,cy+r*0.02,COL.WHITE);
+  line(ctx,cx+r*0.7,cy+r*0.26,cx+r*1.15,cy+r*0.32,COL.WHITE);
+  // feet
+  fillCircle(ctx,cx-r*0.3,cy+r*0.65,Math.max(1,r*0.14),shade(c,0.8));
+  fillCircle(ctx,cx+r*0.15,cy+r*0.65,Math.max(1,r*0.14),shade(c,0.8));
+}
+function guardian(ctx,cx,cy,r,c){
+  fillRect(ctx,cx-r,cy,r*2,r*0.55,c); fillCircle(ctx,cx,cy,r*0.85,c);
+  fillTri(ctx,cx-r*0.5,cy-r*0.6,cx-r*0.75,cy-r*1.3,cx-r*0.2,cy-r*0.7,c);
+  fillTri(ctx,cx+r*0.5,cy-r*0.6,cx+r*0.75,cy-r*1.3,cx+r*0.2,cy-r*0.7,c);
+  fillCircle(ctx,cx-r*0.3,cy-r*0.1,Math.max(1,r*0.15),COL.YELLOW); fillCircle(ctx,cx+r*0.3,cy-r*0.1,Math.max(1,r*0.15),COL.YELLOW);
+  fillCircle(ctx,cx-r*0.3,cy-r*0.1,Math.max(1,r*0.07),COL.RED); fillCircle(ctx,cx+r*0.3,cy-r*0.1,Math.max(1,r*0.07),COL.RED);
+}
+function goblin(ctx,cx,cy,r,c){
+  // pointed ears
+  fillTri(ctx,cx-r*0.55,cy-r*0.05,cx-r*1.05,cy-r*0.35,cx-r*0.35,cy-r*0.35,c);
+  fillTri(ctx,cx+r*0.55,cy-r*0.05,cx+r*1.05,cy-r*0.35,cx+r*0.35,cy-r*0.35,c);
+  // head
+  fillCircle(ctx,cx,cy+r*0.05,r*0.68,c);
+  // crude leather cap
+  fillTri(ctx,cx-r*0.42,cy-r*0.32,cx,cy-r*0.68,cx+r*0.42,cy-r*0.32,'#5A4A2A');
+  fillRect(ctx,cx-r*0.42,cy-r*0.34,r*0.84,r*0.1,'#40331E');
+  // brow ridge + narrowed eyes
+  fillRect(ctx,cx-r*0.38,cy-r*0.22,r*0.76,r*0.1,shade(c,0.6));
+  fillCircle(ctx,cx-r*0.22,cy-r*0.05,Math.max(1,r*0.1),COL.YELLOW); fillCircle(ctx,cx+r*0.22,cy-r*0.05,Math.max(1,r*0.1),COL.YELLOW);
+  fillCircle(ctx,cx-r*0.22,cy-r*0.05,Math.max(1,r*0.04),COL.BLACK); fillCircle(ctx,cx+r*0.22,cy-r*0.05,Math.max(1,r*0.04),COL.BLACK);
+  // snout + crooked toothy grin
+  fillTri(ctx,cx-r*0.07,cy+r*0.08,cx+r*0.07,cy+r*0.08,cx,cy+r*0.2,shade(c,0.7));
+  fillRect(ctx,cx-r*0.3,cy+r*0.27,r*0.6,r*0.15,COL.BLACK);
+  for(let i=0;i<3;i++) fillTri(ctx,cx-r*0.25+i*r*0.22,cy+r*0.27,cx-r*0.14+i*r*0.22,cy+r*0.27,cx-r*0.2+i*r*0.22,cy+r*0.4,COL.WHITE);
+  // dagger arm
+  fillRect(ctx,cx+r*0.55,cy+r*0.14,r*0.15,r*0.5,'#6B4A2A');
+  fillTri(ctx,cx+r*0.48,cy-r*0.02,cx+r*0.77,cy-r*0.02,cx+r*0.625,cy-r*0.32,'#B8B8B8');
+}
+function skeleton(ctx,cx,cy,r,c){
+  // skull
+  fillCircle(ctx,cx,cy-r*0.35,r*0.5,c);
+  fillCircle(ctx,cx-r*0.2,cy-r*0.38,r*0.13,COL.BLACK); fillCircle(ctx,cx+r*0.2,cy-r*0.38,r*0.13,COL.BLACK);
+  fillTri(ctx,cx-r*0.06,cy-r*0.22,cx+r*0.06,cy-r*0.22,cx,cy-r*0.1,COL.BLACK);
+  // jaw with teeth
+  fillRect(ctx,cx-r*0.3,cy-r*0.02,r*0.6,r*0.14,c);
+  for(let i=0;i<4;i++) line(ctx,cx-r*0.24+i*r*0.16,cy-r*0.02,cx-r*0.24+i*r*0.16,cy+r*0.12,COL.BLACK);
+  // neck
+  fillRect(ctx,cx-r*0.07,cy+r*0.12,r*0.14,r*0.18,c);
+  // ribcage
+  fillRect(ctx,cx-r*0.42,cy+r*0.3,r*0.84,r*0.5,shade(c,0.92));
+  for(let i=0;i<4;i++) line(ctx,cx-r*0.38,cy+r*0.36+i*r*0.11,cx+r*0.38,cy+r*0.36+i*r*0.11,COL.BLACK);
+  line(ctx,cx,cy+r*0.3,cx,cy+r*0.8,COL.BLACK);
+  // arm bones reaching out
+  line(ctx,cx-r*0.42,cy+r*0.4,cx-r*0.75,cy+r*0.7,c);
+  line(ctx,cx-r*0.75,cy+r*0.7,cx-r*0.62,cy+r*0.88,c);
+  line(ctx,cx+r*0.42,cy+r*0.4,cx+r*0.75,cy+r*0.7,c);
+  line(ctx,cx+r*0.75,cy+r*0.7,cx+r*0.62,cy+r*0.88,c);
+}
+function monsterEyes(ctx,cx,cy,size,eyeColor){
+  fillCircle(ctx,cx,cy,size/2,COL.BLACK); drawCircleO(ctx,cx,cy,size/2,COL.DARKGREY);
+  fillCircle(ctx,cx-size/5,cy-size/8,Math.max(1,size/8),eyeColor);
+  fillCircle(ctx,cx+size/5,cy-size/8,Math.max(1,size/8),eyeColor);
+}
+function boulder(ctx,cx,cy,r,c){
+  const dark = shade(c,0.5);
+  fillCircle(ctx,cx,cy,r,c);
+  fillCircle(ctx,cx-r*0.5,cy+r*0.35,r*0.6,c); fillCircle(ctx,cx+r*0.55,cy+r*0.3,r*0.55,c); fillCircle(ctx,cx-r*0.1,cy-r*0.4,r*0.5,c);
+  line(ctx,cx-r/3,cy-r/2,cx-r/8,cy,dark); line(ctx,cx-r/8,cy,cx,cy+r/3,dark); line(ctx,cx+r/4,cy-r/3,cx+r/6,cy+r/4,dark);
+  fillCircle(ctx,cx-r*0.4,cy-r*0.15,Math.max(1,r/8),COL.DARKGREEN); fillCircle(ctx,cx+r*0.35,cy+r*0.45,Math.max(1,r/10),COL.DARKGREEN);
+  fillCircle(ctx,cx-r/3,cy-r/2,Math.max(1,r/10),COL.LIGHTGREY);
+}
+function phoenix(ctx,cx,cy,r,c){
+  c = c||COL.ORANGE;
+  fillTri(ctx,cx-r*0.1,cy-r*0.1,cx-r*1.3,cy-r*0.5,cx-r*0.3,cy+r*0.3,c);
+  fillTri(ctx,cx+r*0.1,cy-r*0.1,cx+r*1.3,cy-r*0.5,cx+r*0.3,cy+r*0.3,c);
+  fillTri(ctx,cx-r*0.15,cy-r*0.05,cx-r*0.85,cy-r*0.12,cx-r*0.25,cy+r*0.12,COL.YELLOW);
+  fillTri(ctx,cx+r*0.15,cy-r*0.05,cx+r*0.85,cy-r*0.12,cx+r*0.25,cy+r*0.12,COL.YELLOW);
+  fillCircle(ctx,cx,cy,r*0.42,c);
+  fillCircle(ctx,cx,cy-r*0.5,r*0.24,c);
+  fillTri(ctx,cx-r*0.05,cy-r*0.44,cx+r*0.1,cy-r*0.44,cx,cy-r*0.3,COL.YELLOW);
+  fillTri(ctx,cx-r*0.1,cy-r*0.72,cx,cy-r*0.98,cx+r*0.03,cy-r*0.68,COL.YELLOW);
+  fillTri(ctx,cx+r*0.05,cy-r*0.68,cx+r*0.16,cy-r*0.9,cx+r*0.14,cy-r*0.62,COL.RED);
+  fillCircle(ctx,cx-r*0.06,cy-r*0.52,Math.max(1,r*0.06),COL.BLACK);
+  fillTri(ctx,cx-r*0.15,cy+r*0.35,cx-r*0.04,cy+r*0.92,cx+r*0.1,cy+r*0.4,COL.RED);
+  fillTri(ctx,cx,cy+r*0.4,cx+r*0.1,cy+r*1.0,cx+r*0.25,cy+r*0.4,COL.YELLOW);
+  fillTri(ctx,cx+r*0.15,cy+r*0.35,cx+r*0.3,cy+r*0.85,cx+r*0.35,cy+r*0.35,COL.RED);
+}
+function griffin(ctx,cx,cy,r,c){
+  c = c||'#C9A24A';
+  fillCircle(ctx,cx,cy+r*0.2,r*0.55,c);
+  fillTri(ctx,cx-r*0.2,cy-r*0.1,cx-r*1.1,cy-r*0.55,cx-r*0.3,cy+r*0.15,shade(c,0.75));
+  fillTri(ctx,cx+r*0.2,cy-r*0.1,cx+r*1.1,cy-r*0.55,cx+r*0.3,cy+r*0.15,shade(c,0.75));
+  fillCircle(ctx,cx,cy-r*0.35,r*0.32,'#8A6A3C');
+  fillTri(ctx,cx-r*0.28,cy-r*0.32,cx-r*0.55,cy-r*0.22,cx-r*0.28,cy-r*0.15,COL.YELLOW);
+  fillCircle(ctx,cx-r*0.08,cy-r*0.4,Math.max(1,r*0.07),COL.WHITE);
+  fillCircle(ctx,cx-r*0.08,cy-r*0.4,Math.max(1,r*0.035),COL.BLACK);
+  fillTri(ctx,cx-r*0.1,cy-r*0.6,cx-r*0.02,cy-r*0.78,cx+r*0.06,cy-r*0.58,'#8A6A3C');
+  fillRect(ctx,cx-r*0.35,cy+r*0.6,r*0.16,r*0.3,c);
+  fillRect(ctx,cx+r*0.2,cy+r*0.6,r*0.16,r*0.3,c);
+  fillCircle(ctx,cx-r*0.27,cy+r*0.92,Math.max(1,r*0.1),COL.YELLOW);
+  fillCircle(ctx,cx+r*0.28,cy+r*0.92,Math.max(1,r*0.1),COL.YELLOW);
+  line(ctx,cx+r*0.5,cy+r*0.4,cx+r*0.9,cy+r*0.1,shade(c,0.7));
+}
+function hydra(ctx,cx,cy,r,c){
+  c = c||COL.DARKGREEN;
+  fillCircle(ctx,cx,cy+r*0.4,r*0.6,c);
+  fillRect(ctx,cx-r*0.5,cy+r*0.2,r,r*0.5,c);
+  [-0.55,0,0.55].forEach((nx,i)=>{
+    const hx=cx+nx*r, hy=cy-r*0.5-Math.abs(nx)*r*0.15, hc=shade(c,i===1?1:0.82);
+    ctx.strokeStyle=hc; ctx.lineWidth=Math.max(2,r*0.14);
+    ctx.beginPath(); ctx.moveTo(cx+nx*r*0.5,cy+r*0.1); ctx.lineTo(hx,hy+r*0.2); ctx.stroke();
+    fillCircle(ctx,hx,hy,r*0.22,hc);
+    fillCircle(ctx,hx-r*0.08,hy-r*0.04,Math.max(1,r*0.05),COL.YELLOW);
+    fillCircle(ctx,hx+r*0.08,hy-r*0.04,Math.max(1,r*0.05),COL.YELLOW);
+    fillTri(ctx,hx-r*0.1,hy+r*0.15,hx+r*0.1,hy+r*0.15,hx,hy+r*0.3,COL.RED);
+  });
+}
+function medusa(ctx,cx,cy,r,c){
+  c = c||'#5B8C5A';
+  fillTri(ctx,cx,cy-r*0.1,cx-r*0.5,cy+r*0.9,cx+r*0.5,cy+r*0.9,'#3E3A5E');
+  fillCircle(ctx,cx,cy-r*0.25,r*0.35,c);
+  for(let i=-2;i<=2;i++){
+    const ang=i*0.35, bx=cx+Math.sin(ang)*r*0.35, by=cy-r*0.5;
+    line(ctx,cx+Math.sin(ang)*r*0.2,cy-r*0.4,bx+Math.sin(ang+0.6)*r*0.25,by-r*0.25,COL.DARKGREEN);
+    fillCircle(ctx,bx+Math.sin(ang+0.6)*r*0.25,by-r*0.25,r*0.08,COL.DARKGREEN);
+    fillCircle(ctx,bx+Math.sin(ang+0.6)*r*0.25-r*0.03,by-r*0.25,Math.max(1,r*0.025),COL.YELLOW);
+  }
+  fillCircle(ctx,cx-r*0.14,cy-r*0.28,Math.max(1,r*0.07),COL.YELLOW);
+  fillCircle(ctx,cx+r*0.14,cy-r*0.28,Math.max(1,r*0.07),COL.YELLOW);
+  fillCircle(ctx,cx-r*0.14,cy-r*0.28,Math.max(1,r*0.03),COL.RED);
+  fillCircle(ctx,cx+r*0.14,cy-r*0.28,Math.max(1,r*0.03),COL.RED);
+  fillRect(ctx,cx-r*0.1,cy-r*0.08,r*0.2,r*0.05,COL.BLACK);
+}
+
+function drawCombat(ctx,W,H){
+  fillRect(ctx,0,0,W,H,COL.BLACK);
+  corridorBackdrop(ctx,W,H);
+  banner(ctx,W,0,26,'GOBLIN',3,COL.WHITE);
+  bar(ctx,4,32,W-8,12,0.58,COL.RED,COL.MAROON);
+  goblin(ctx,W/2,H*0.325,Math.min(W,H)*0.15,'#4C7A3E');
+  fillRect(ctx,0,104,W,66,shade(COL.STONE,1.4)); drawRect(ctx,0,104,W,66,COL.BLACK);
+  text(ctx,'ATTACK',W/2,118,3,COL.CYAN);
+  text(ctx,'-12',W/2,150,4,COL.CYAN);
+  bar(ctx,4,176,W-8,10,0.4,COL.SKYBLUE,COL.NAVY);
+  text(ctx,'HP',14,192,2,COL.WHITE,'left');
+  bar(ctx,4,210,W-8,12,0.66,COL.GREEN,COL.DARKGREEN);
+  drawFitAt(ctx,W,'x2 COMBO','middle_right',W-6,228,2,COL.YELLOW);
+}
+function drawObstacle(ctx,W,H){
+  fillRect(ctx,0,0,W,H,COL.BLACK);
+  corridorBackdrop(ctx,W,H);
+  banner(ctx,W,4,20,'OBSTACLE!',2,COL.ORANGE);
+  boulder(ctx,W/2,H*0.325,Math.min(W,H)*0.15,COL.ROCK);
+  text(ctx,'PARRY',W/2,H*0.49,4,COL.CYAN);
+  bar(ctx,4,H-46,W-8,10,0.55,COL.RED,COL.BLACK);
+  banner(ctx,W,H-20,16,'swing to cross!',2,COL.WHITE);
+}
+function drawVictoryChoice(ctx,W,H){
+  fillRect(ctx,0,0,W,H,COL.BLACK);
+  corridorBackdrop(ctx,W,H);
+  banner(ctx,W,4,20,'HYDRA SLAIN!',2,COL.GOLD);
+  text(ctx,'SCORE',W/2,H*0.27,2,COL.LIGHTGREY);
+  text(ctx,'4820',W/2,H*0.36,4,COL.GOLD);
+  drawFitAt(ctx,W,'choose next dungeon','middle_center',W/2,H*0.47,1,COL.LIGHTGREY);
+  const cardW=(W-16)/2, cardY=H*0.53, cardH=H*0.31;
+  fillRect(ctx,6,cardY,cardW,cardH,shade(COL.STONE,1.6)); drawRect(ctx,6,cardY,cardW,cardH,COL.BLACK);
+  fillRect(ctx,10+cardW,cardY,cardW,cardH,shade(COL.STONE,1.6)); drawRect(ctx,10+cardW,cardY,cardW,cardH,COL.BLACK);
+  text(ctx,'A',6+cardW/2,cardY+15,2,COL.YELLOW);
+  drawFitAt(ctx,cardW,'Sunken','middle_center',6+cardW/2,cardY+cardH*0.55,1,COL.WHITE);
+  drawFitAt(ctx,cardW,'Crypt','middle_center',6+cardW/2,cardY+cardH*0.75,1,COL.WHITE);
+  text(ctx,'B',10+cardW+cardW/2,cardY+15,2,COL.YELLOW);
+  drawFitAt(ctx,cardW,'Frozen','middle_center',10+cardW+cardW/2,cardY+cardH*0.55,1,COL.WHITE);
+  drawFitAt(ctx,cardW,'Vault','middle_center',10+cardW+cardW/2,cardY+cardH*0.75,1,COL.WHITE);
+  text(ctx,'Best 4820',W/2,H-6,1,COL.DARKGREY);
+}
+
+const screens = [
+  {name:'Title', sub:'boot & attract', fn:drawTitle},
+  {name:'Walking', sub:'auto-advance corridor', fn:(ctx,w,h)=>drawWalk(ctx,w,h,320)},
+  {name:'Combat', sub:'goblin encounter', fn:drawCombat},
+  {name:'Obstacle', sub:'boulder, parry prompt', fn:drawObstacle},
+  {name:'Boss Victory', sub:'score & next dungeon', fn:drawVictoryChoice},
+];
+const screensEl = document.getElementById('screens');
+screens.forEach(s=>{
+  const fig = document.createElement('figure');
+  fig.className='device'; fig.style.margin=0;
+  const bezel = document.createElement('div'); bezel.className='bezel';
+  const canvas = document.createElement('canvas');
+  const ctx = mkctx(canvas,135,240);
+  s.fn(ctx,135,240);
+  const btns = document.createElement('div'); btns.className='btns';
+  btns.innerHTML = '<span class="btn a"></span><span class="btn"></span>';
+  bezel.appendChild(canvas); bezel.appendChild(btns);
+  const cap = document.createElement('figcaption');
+  cap.innerHTML = `<b>${s.name}</b><br>${s.sub}`;
+  fig.appendChild(bezel); fig.appendChild(cap);
+  screensEl.appendChild(fig);
+});
+
+// ---------- FX loops ----------
+function killShine(ctx,W,H,t){
+  fillRect(ctx,0,0,W,H,'#0a0806');
+  corridorBackdrop(ctx,W,H);
+  const cx=W/2, cy=H*0.42;
+  const p = (t%900)/900;
+  const burst = p<0.5 ? p/0.5 : 1-(p-0.5)/0.5;
+  fillCircle(ctx,cx,cy,26*burst*0.4,shade(COL.GOLD,0.9));
+  for(let i=0;i<8;i++){
+    const ang = (i/8)*6.283 + p*1.2;
+    const len = 14+burst*30;
+    const x2 = cx+Math.cos(ang)*len, y2 = cy+Math.sin(ang)*len;
+    ctx.strokeStyle = i%2===0?COL.GOLD:COL.WHITE; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(cx+Math.cos(ang)*6,cy+Math.sin(ang)*6); ctx.lineTo(x2,y2); ctx.stroke();
+  }
+  text(ctx,'DEFEATED!',W/2,H*0.72,3,COL.GOLD);
+}
+function hitSplash(ctx,W,H,t){
+  const p=(t%700)/700;
+  const punch = p<0.15?1:Math.max(0,1-(p-0.15)/0.5);
+  fillRect(ctx,0,0,W,H, punch>0.6 ? COL.RED : shade(COL.RED, 0.25+punch*0.3));
+  const seed = Math.floor(t/700);
+  let rnd = seed*9301+49297;
+  function r(){ rnd=(rnd*9301+49297)%233280; return rnd/233280; }
+  for(let i=0;i<9;i++){
+    const bx=r()*W, by=r()*H, br=(6+r()*16)*punch;
+    fillCircle(ctx,bx,by,br,shade('#7A0E0E',0.6+r()*0.5));
+  }
+  text(ctx,'-14',W/2,H*0.5,4,COL.WHITE);
+}
+function attackShine(ctx,W,H,t){
+  fillRect(ctx,0,0,W,H,'#0a0806');
+  corridorBackdrop(ctx,W,H);
+  const cx=W/2, cy=H*0.42, r=Math.min(W,H)*0.15;
+  const p=(t%500)/500;
+  const flash = p<0.25;
+  goblin(ctx,cx,cy,r, flash?COL.WHITE:'#4C7A3E');
+  if(flash){
+    for(let i=0;i<5;i++){
+      const ang=(i/5)*6.283+1.4;
+      line(ctx,cx+Math.cos(ang)*r,cy+Math.sin(ang)*r,cx+Math.cos(ang)*(r+16),cy+Math.sin(ang)*(r+16),COL.WHITE);
+    }
+  }
+  text(ctx,'ATTACK',W/2,H*0.72,3,COL.CYAN);
+  text(ctx,'-12',W/2,H*0.84,3,COL.CYAN);
+}
+
+const fx = [
+  {name:'Monster kill — magic shine', desc:'On defeat: a gold sparkle burst radiates from the monster before the "DEFEATED!" card.', fn:killShine},
+  {name:'Player hit — red splash', desc:'Replaces the flat red flash: dark-red splatter blobs scattered across the screen, brief and violent.', fn:hitSplash},
+  {name:'Landed attack — shine', desc:'Every successful swing flashes the monster white with a few radiating sparkle lines, quick enough to not slow combat.', fn:attackShine},
+];
+const fxEl = document.getElementById('fx');
+const fxCtxs = [];
+fx.forEach(f=>{
+  const card=document.createElement('div'); card.className='fx-card';
+  const canvas=document.createElement('canvas');
+  const ctx=mkctx(canvas,135,120);
+  const label=document.createElement('div'); label.className='fx-label'; label.textContent=f.name;
+  const desc=document.createElement('div'); desc.className='fx-desc'; desc.textContent=f.desc;
+  card.appendChild(canvas); card.appendChild(label); card.appendChild(desc);
+  fxEl.appendChild(card);
+  fxCtxs.push({ctx,fn:f.fn});
+});
+const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function fxLoop(t){
+  fxCtxs.forEach(({ctx,fn})=>fn(ctx,135,120, reduceMotion ? 0 : t));
+  if(!reduceMotion) requestAnimationFrame(fxLoop); else requestAnimationFrame(()=>{});
+}
+requestAnimationFrame(fxLoop);
+
+// ---------- walking screen keeps animating too ----------
+const walkCanvas = screensEl.children[1].querySelector('canvas');
+const walkCtx = walkCanvas.getContext('2d'); walkCtx.imageSmoothingEnabled=false;
+function walkLoop(t){
+  if(!reduceMotion) drawWalk(walkCtx,135,240,t);
+  requestAnimationFrame(walkLoop);
+}
+requestAnimationFrame(walkLoop);
+
+// ---------- monster roster ----------
+const roster = [
+  {name:'Slime', tier:'t1', label:'floor 1+', fn:slime, desc:'Slow, hard-hitting. Mostly demands Block.'},
+  {name:'Bat', tier:'t1', label:'floor 1+', fn:bat, desc:'Fast, fragile. Mostly demands Parry.'},
+  {name:'Rat', tier:'t1', label:'floor 1+', fn:rat, desc:'Balanced, even split.'},
+  {name:'Goblin', tier:'t2', label:'floor 3+', fn:goblin, desc:'Armed, aggressive. Hits harder, favors Block.'},
+  {name:'Skeleton', tier:'t2', label:'floor 4+', fn:skeleton, desc:'Tanky, slow, brutal damage.'},
+  {name:'Phoenix', tier:'t3', label:'floor 6+', fn:phoenix, desc:'Rare elite. Fast and fiery, punishes hesitation.'},
+  {name:'Griffin', tier:'t3', label:'floor 6+', fn:griffin, desc:'Rare elite. Sharp bursts, high crit chance.'},
+  {name:'Hydra', tier:'boss', label:'boss', fn:hydra, desc:'Three heads, three attack patterns. Very difficult.'},
+  {name:'Medusa', tier:'boss', label:'boss', fn:medusa, desc:'Cursed gaze punishes a late Block. Very difficult.'},
+];
+const rosterEl = document.getElementById('roster');
+roster.forEach(m=>{
+  const card=document.createElement('div'); card.className='mon';
+  const canvas=document.createElement('canvas'); const ctx=mkctx(canvas,80,80);
+  m.fn(ctx,40,44,26);
+  const name=document.createElement('div'); name.className='name'; name.textContent=m.name;
+  const tier=document.createElement('div'); tier.className='tier '+m.tier; tier.textContent=m.label;
+  const desc=document.createElement('div'); desc.className='desc'; desc.textContent=m.desc;
+  card.appendChild(canvas); card.appendChild(name); card.appendChild(tier); card.appendChild(desc);
+  rosterEl.appendChild(card);
+});
+
+// ---------- jingle ----------
+const JINGLE = [
+  [523,150],[659,150],[784,150],[1047,420],[0,120],[784,150],[880,150],[1047,520]
+];
+const notesEl = document.getElementById('notes');
+const chips = JINGLE.map(([hz],i)=>{
+  const chip=document.createElement('span'); chip.className='note-chip';
+  chip.textContent = hz===0 ? 'rest' : Math.round(hz)+'Hz';
+  notesEl.appendChild(chip); return chip;
+});
+let audioCtx=null;
+document.getElementById('playJingle').addEventListener('click', ()=>{
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    let when = audioCtx.currentTime;
+    chips.forEach(c=>c.classList.remove('active'));
+    JINGLE.forEach(([hz,ms])=>{
+      const dur = ms/1000;
+      if(hz>0){
+        const osc=audioCtx.createOscillator(); const gain=audioCtx.createGain();
+        osc.type='square'; osc.frequency.value=hz;
+        gain.gain.setValueAtTime(0.0001, when);
+        gain.gain.linearRampToValueAtTime(0.14, when+0.008);
+        gain.gain.exponentialRampToValueAtTime(0.0001, when+dur);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(when); osc.stop(when+dur+0.02);
+      }
+      when += dur + 0.02;
+    });
+    let acc=0;
+    JINGLE.forEach(([hz,ms],i)=>{
+      setTimeout(()=>{ chips.forEach(c=>c.classList.remove('active')); chips[i].classList.add('active'); }, acc);
+      acc += ms+20;
+    });
+    setTimeout(()=>chips.forEach(c=>c.classList.remove('active')), acc);
+  }catch(e){}
+});
+</script>
